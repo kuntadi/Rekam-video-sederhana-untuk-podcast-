@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Pro - Panel Geser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* --- AREA UTAMA VIDEO --- */
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* --- TANDA REC, TIMER, LABEL KAMERA --- */
+        .rec-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.65);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .rec-dot {
+            width: 12px;
+            height: 12px;
+            background: red;
+            border-radius: 50%;
+            animation: kedip 1s infinite;
+        }
+
+        @keyframes kedip {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .timer {
+            position: absolute;
+            top: 15px;
+            right: 60px;
+            background: rgba(0,0,0,0.65);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .label-kamera {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(52, 152, 219, 0.85);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            z-index: 10;
+        }
+
+        /* --- GRAFIK SUARA DI BAWAH --- */
+        .audio-visual {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 0 10px;
+            z-index: 9;
+        }
+
+        .bar-suara {
+            width: 4px;
+            background: #2ecc71;
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        /* --- PANEL KONTROL GESER --- */
+        .panel-samping {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 320px;
+            height: 100vh;
+            background: #1e1e1e;
+            box-shadow: -2px 0 15px rgba(0,0,0,0.5);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 20;
+            padding: 1.2rem;
+            overflow-y: auto;
+        }
+
+        .panel-samping.buka {
+            transform: translateX(0);
+        }
+
+        /* --- TOMBOL BUKA/TUTUP PANEL --- */
+        .tombol-panel {
+            position: fixed;
+            top: 23%;
+            right: 10px;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #f39c12;
+            color: #000;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            z-index: 25;
+            transition: all 0.2s;
+        }
+
+        .tombol-panel:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* --- ISI PANEL --- */
+        .panel-samping h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #f39c12;
+            font-size: 1.1rem;
+        }
+
+        .mic-selector {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .mic-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .mic-selector select {
+            width: 100%;
+            padding: 0.6rem;
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .info-mic .jenis-mic {
+            font-weight: bold;
+            color: #2ecc71;
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .info-mic .saran-mic {
+            color: #f39c12;
+            font-size: 0.78rem;
+            line-height: 1.3;
+        }
+
+        .jumlah-mic {
+            font-size: 0.78rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+        }
+
+        .setting-item {
+            margin-bottom: 1rem;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+
+        .setting-item input[type="range"] {
+            width: 100%;
+            accent-color: #2ecc71;
+        }
+
+        .nilai-volume {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #ddd;
+            margin-top: 0.2rem;
+        }
+
+        .setting-check {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #333;
+            font-size: 0.9rem;
+        }
+
+        .kontrol-tombol {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+            margin: 1.2rem 0;
+        }
+
+        button {
+            padding: 0.8rem 0.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #btnDepan { background: #3498db; color: #fff; }
+        #btnBelakang { background: #9b59b6; color: #fff; }
+        #btnRekam { background: #27ae60; color: #fff; display: none; grid-column: 1 / -1; }
+        #btnStop { background: #e74c3c; color: #fff; display: none; grid-column: 1 / -1; }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-simpan {
+            display: block;
+            text-align: center;
+            background: #f39c12;
+            color: #000;
+            padding: 0.7rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .status-info {
+            margin-top: 1rem;
+            padding: 0.7rem;
+            background: #2a2a2a;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-align: center;
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-container">
+        <video id="videoUtama" autoplay playsinline></video>
+
+        <div class="rec-indicator" id="recIndicator" style="display: none;">
+            <div class="rec-dot"></div>
+            <span>REC</span>
+        </div>
+
+        <div class="timer" id="timerRekam">00:00</div>
+
+        <div class="label-kamera" id="labelKamera">Belum Siap</div>
+
+        <div class="audio-visual" id="grafikSuara"></div>
+    </div>
+
+    <!-- Tombol Buka/Tutup Panel -->
+    <button class="tombol-panel" id="tombolPanel">☰</button>
+
+    <!-- Panel Kontrol Geser -->
+    <div class="panel-samping" id="panelKontrol">
+        <h3>🎛️ PENGATURAN & KONTROL</h3>
+
+        <div class="mic-selector">
+            <label>Pilih Mikrofon:</label>
+            <select id="pilihMic">
+                <option value="">🔄 Memindai...</option>
+            </select>
+            <div class="info-mic">
+                <div class="jenis-mic" id="jenisMicInfo">- Belum dipilih -</div>
+                <div class="saran-mic" id="saranPengaturan"></div>
+            </div>
+            <div class="jumlah-mic" id="infoJumlahMic"></div>
+        </div>
+
+        <div class="setting-item">
+            <label>Volume Penguat Suara</label>
+            <input type="range" id="volumeGain" min="50" max="200" value="150">
+            <div class="nilai-volume">Nilai: <span id="nilaiVolume">150%</span></div>
+        </div>
+
+        <div class="setting-check">
+            <label>Peredam Bising</label>
+            <input type="checkbox" id="noiseSuppression" checked>
+        </div>
+        <div class="setting-check">
+            <label>Hilangkan Gema</label>
+            <input type="checkbox" id="echoCancellation" checked>
+        </div>
+        <div class="setting-check">
+            <label>Fokus Suara Bicara</label>
+            <input type="checkbox" id="voiceFocus" checked>
+        </div>
+
+        <div class="kontrol-tombol">
+            <button id="btnDepan">📸 Kamera Depan</button>
+            <button id="btnBelakang">🎥 Kamera Belakang</button>
+            <button id="btnRekam">🔴 Mulai Rekam</button>
+            <button id="btnStop">⏹️ Berhenti Rekam</button>
+        </div>
+
+        <a href="#" id="btnSimpan" class="btn-simpan" download="podcast-rekaman.webm">💾 Simpan Hasil</a>
+
+        <div class="status-info" id="status">Siap digunakan</div>
+    </div>
+
+    <script>
+        // Elemen Panel
+        const tombolPanel = document.getElementById('tombolPanel');
+        const panelKontrol = document.getElementById('panelKontrol');
+        let panelTerbuka = false;
+
+        // Buka/Tutup Panel
+        tombolPanel.addEventListener('click', () => {
+            panelTerbuka = !panelTerbuka;
+            if (panelTerbuka) {
+                panelKontrol.classList.add('buka');
+                tombolPanel.textContent = '✕';
+            } else {
+                panelKontrol.classList.remove('buka');
+                tombolPanel.textContent = '☰';
+            }
+        });
+
+        // Elemen Lainnya
+        const videoUtama = document.getElementById('videoUtama');
+        const recIndicator = document.getElementById('recIndicator');
+        const timerRekam = document.getElementById('timerRekam');
+        const labelKamera = document.getElementById('labelKamera');
+        const grafikSuara = document.getElementById('grafikSuara');
+        const btnDepan = document.getElementById('btnDepan');
+        const btnBelakang = document.getElementById('btnBelakang');
+        const btnRekam = document.getElementById('btnRekam');
+        const btnStop = document.getElementById('btnStop');
+        const btnSimpan = document.getElementById('btnSimpan');
+        const status = document.getElementById('status');
+
+        const pilihMic = document.getElementById('pilihMic');
+        const jenisMicInfo = document.getElementById('jenisMicInfo');
+        const saranPengaturan = document.getElementById('saranPengaturan');
+        const infoJumlahMic = document.getElementById('infoJumlahMic');
+        const volumeGain = document.getElementById('volumeGain');
+        const nilaiVolume = document.getElementById('nilaiVolume');
+        const noiseSuppression = document.getElementById('noiseSuppression');
+        const echoCancellation = document.getElementById('echoCancellation');
+        const voiceFocus = document.getElementById('voiceFocus');
+
+        let streamAktif, mediaRecorder, potonganData = [], waktuMulai, intervalTimer;
+        let audioContext, analyser, gainNode, arrayData, barSuara = [];
+
+        // --- Siapkan Grafik Suara ---
+        for (let i = 0; i < 32; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar-suara';
+            grafikSuara.appendChild(bar);
+            barSuara.push(bar);
+        }
+
+        // --- Deteksi Jenis Mikrofon ---
+        function deteksiJenisMic(namaLabel) {
+            let jenis = "", saran = "";
+            if (namaLabel.toLowerCase().includes('bluetooth') || namaLabel.toLowerCase().includes('wireless')) {
+                jenis = "🔵 Mikrofon Eksternal - Bluetooth";
+                saran = "Atur: 100% - 130%";
+            } else if (namaLabel.toLowerCase().includes('headset') || namaLabel.toLowerCase().includes('jack') || namaLabel.toLowerCase().includes('3.5mm')) {
+                jenis = "🎧 Mikrofon Eksternal - Kabel";
+                saran = "Atur: 90% - 120%";
+            } else if (namaLabel.toLowerCase().includes('usb') || namaLabel.toLowerCase().includes('type-c')) {
+                jenis = "⚡ Mikrofon Eksternal - USB/Tipe-C";
+                saran = "Atur: 70% - 100%";
+            } else if (namaLabel.toLowerCase().includes('bottom') || namaLabel.toLowerCase().includes('main') || namaLabel.toLowerCase().includes('bawah')) {
+                jenis = "📱 Mikrofon Bawaan - Utama";
+                saran = "Atur: 140% - 180%";
+            } else if (namaLabel.toLowerCase().includes('top') || namaLabel.toLowerCase().includes('belakang')) {
+                jenis = "📱 Mikrofon Bawaan - Atas/Belakang";
+                saran = "Atur: 160% - 200%";
+            } else if (namaLabel.toLowerCase().includes('front') || namaLabel.toLowerCase().includes('depan')) {
+                jenis = "📱 Mikrofon Bawaan - Depan";
+                saran = "Atur: 150% - 180%";
+            } else {
+                jenis = "❓ Mikrofon Tidak Dikenal";
+                saran = "Coba: 100% - 150%";
+            }
+            jenisMicInfo.textContent = jenis;
+            saranPengaturan.textContent = saran;
+        }
+
+        // --- Ambil Daftar Mikrofon ---
+        navigator.mediaDevices.enumerateDevices()
+            .then(perangkat => {
+                const daftarMic = perangkat.filter(dev => dev.kind === 'audioinput');
+                infoJumlahMic.textContent = `Ditemukan: ${daftarMic.length} mikrofon`;
+                pilihMic.innerHTML = '';
+                daftarMic.forEach((mic, i) => {
+                    const opsi = document.createElement('option');
+                    opsi.value = mic.deviceId;
+                    opsi.textContent = mic.label || `Mikrofon ${i+1}`;
+                    pilihMic.appendChild(opsi);
+                });
+                if (daftarMic.length > 0) deteksiJenisMic(daftarMic[0].label || "");
+            });
+
+        pilihMic.addEventListener('change', () => deteksiJenisMic(pilihMic.value ? pilihMic.options[pilihMic.selectedIndex].text : ""));
+        volumeGain.addEventListener('input', () => {
+            nilaiVolume.textContent = volumeGain.value + '%';
+            if (gainNode) gainNode.gain.value = volumeGain.value / 100;
+        });
+
+        // --- Buka Kamera ---
+        async function bukaKamera(facing) {
+            await matikanSemua();
+            try {
+                streamAktif = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facing, width: {ideal: 1280}, height: {ideal: 720} },
+                    audio: {
+                        deviceId: {exact: pilihMic.value},
+                        echoCancellation: echoCancellation.checked,
+                        noiseSuppression: noiseSuppression.checked,
+                        autoGainControl: voiceFocus.checked,
+                        sampleRate: 48000
+                    }
+                });
+                videoUtama.srcObject = streamAktif;
+                labelKamera.textContent = facing === 'user' ? "Kamera Depan - Host" : "Kamera Belakang - Tamu";
+                labelKamera.style.background = facing === 'user' ? "#e74c3c" : "#27ae60";
+                btnRekam.style.display = 'block';
+                siapkanAudio();
+                status.textContent = "✅ Siap merekam";
+            } catch (err) {
+                status.textContent = "❌ Gagal: " + err.message;
+            }
+        }
+
+        btnDepan.addEventListener('click', () => bukaKamera('user'));
+        btnBelakang.addEventListener('click', () => bukaKamera({exact: 'environment'}));
+
+        // --- Rekam & Berhenti ---
+        btnRekam.addEventListener('click', () => {
+            potonganData = [];
+            mediaRecorder = new MediaRecorder(streamAktif, { mimeType: 'video/webm; codecs=vp9,opus', audioBitsPerSecond: 128000 });
+            mediaRecorder.ondataavailable = e => e.data.size > 0 && potonganData.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(potonganData, {type: 'video/webm'});
+                btnSimpan.href = URL.createObjectURL(blob);
+                btnSimpan.style.display = 'block';
+                recIndicator.style.display = 'none';
+                clearInterval(intervalTimer);
+                status.textContent = "✅ Rekaman selesai";
+            };
+            mediaRecorder.start();
+            waktuMulai = Date.now();
+            intervalTimer = setInterval(() => {
+                const detik = Math.floor((Date.now() - waktuMulai)/1000);
+                const m = String(Math.floor(detik/60)).padStart(2,'0');
+                const d = String(detik%60).padStart(2,'0');
+                timerRekam.textContent = `${m}:${d}`;
+            }, 1000);
+            recIndicator.style.display = 'flex';
+            btnRekam.style.display = 'none';
+            btnStop.style.display = 'block';
+            btnSimpan.style.display = 'none';
+            status.textContent = "🔴 Sedang merekam...";
+        });
+
+        btnStop.addEventListener('click', () => {
+            mediaRecorder.stop();
+            btnStop.style.display = 'none';
+            btnRekam.style.display = 'block';
+        });
+
+        // --- Pengolahan Suara ---
+        function siapkanAudio() {
+            if (audioContext) audioContext.close();
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = volumeGain.value / 100;
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 64;
+            const sumber = audioContext.createMediaStreamSource(streamAktif);
+            sumber.connect(gainNode);
+            gainNode.connect(analyser);
+            arrayData = new Uint8Array(analyser.frequencyBinCount);
+            gambarGrafik();
+        }
+
+        function gambarGrafik() {
+            requestAnimationFrame(gambarGrafik);
+            if (!analyser) return;
+            analyser.getByteFrequencyData(arrayData);
+            barSuara.forEach((bar, i) => {
+                const tinggi = arrayData[i] / 1.5;
+                bar.style.height = `${tinggi}px`;
+                bar.style.background = tinggi > 50 ? '#e74c3c' : '#2ecc71';
+            });
+        }
+
+        function matikanSemua() {
+            if (streamAktif) streamAktif.getTracks().forEach(t => t.stop());
+            if (audioContext) audioContext.close();
+            videoUtama.srcObject = null;
+            btnRekam.style.display = 'none';
+            btnStop.style.display = 'none';
+            recIndicator.style.display = 'none';
+            clearInterval(intervalTimer);
+            timerRekam.textContent = "00:00";
+        }
+        // --- FITUR OTOMATIS FULLSCREEN SAAT DIMUAT ---
+        window.addEventListener('load', async () => {
+        try {
+        // Minta izin masuk layar penuh
+        if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) { // Untuk Chrome/Safari
+        await document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) { // Untuk Edge
+        await document.documentElement.msRequestFullscreen();
+        }
+        } catch (err) {
+        // Biasanya izin ini baru berjalan setelah ada interaksi pengguna, jadi tampilkan info saja
+        console.log("Fullscreen otomatis membutuhkan interaksi awal, tekan tombol apa saja untuk masuk penuh");
+        }
+        });
+        
+        // Tambahan: Masuk fullscreen saat pengguna pertama kali menekan layar/tombol
+        document.addEventListener('click', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+        }
+        }
+        }, { once: true }); // Cukup jalan satu kali saja
+    // Simpan ke memori internal browser
+    async function simpanKePenyimpananInternal(blob, namaFile) {
+    try {
+    const root = await navigator.storage.getDirectory();
+    const fileHandle = await root.getFileHandle(namaFile, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    status.textContent = `✅ Tersimpan di dalam aplikasi: ${namaFile}`;
+    } catch (err) {
+    status.textContent = "❌ Gagal simpan internal, pakai cara unduh";
+    const url = URL.createObjectURL(blob);
+    btnSimpan.href = url;
+    btnSimpan.download = namaFile;
+    }
+    }
+    </script>
+
+</body>
+</html>
