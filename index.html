@@ -35,8 +35,7 @@
         /* --- TANDA REC, TIMER, LABEL KAMERA --- */
         .rec-indicator {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 15ptop            left: 15px;
             background: rgba(0,0,0,0.65);
             padding: 6px 12px;
             border-radius: 20px;
@@ -131,7 +130,7 @@
         /* --- TOMBOL BUKA/TUTUP PANEL --- */
         .tombol-panel {
             position: fixed;
-            top: 23%;
+            top: 30%;
             right: 10px;
             transform: translateY(-50%);
             width: 45px;
@@ -309,6 +308,9 @@
         <h3>🎛️ PENGATURAN & KONTROL</h3>
 
         <div class="mic-selector">
+             <button id="btnIzinMic" style="width:100%; background:#e67e22; color:white; padding:0.7rem; border:none; border-radius:8px; margin-bottom:0.8rem; font-weight:600; cursor:pointer;">
+            🎤 IZIN MIKROFON
+             </button>
             <label>Pilih Mikrofon:</label>
             <select id="pilihMic">
                 <option value="">🔄 Memindai...</option>
@@ -469,9 +471,15 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         // --- Buka Kamera ---
-        async function bukaKamera(facing) {
-            await matikanSemua();
-            try {
+         async function bukaKamera(facing) {
+     if(!izinMicOK){
+     status.innerHTML = '<span style="color:#f87171">Klik "MINTA IZIN MIKROFON DULU" pak!</span>';
+     btnIzinMic.style.animation = 'kedip 0.5s 3'; // bikin tombol kedip
+     return;
+     }
+     
+     await matikanSemua();
+     try {
                 streamAktif = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: facing, width: {ideal: 1280}, height: {ideal: 720} },
                     audio: {
@@ -609,7 +617,53 @@ window.addEventListener('DOMContentLoaded', () => {
     btnSimpan.download = namaFile;
     }
     }
-    </script>
+       const btnIzinMic = document.getElementById('btnIzinMic');
+let izinMicOK = false;
+
+// FUNGSI MINTA IZIN MIC OTOMATIS
+btnIzinMic.addEventListener('click', async () => {
+    if(location.protocol!== 'https:' && location.hostname!== 'localhost'){
+        status.innerHTML = '<span style="color:#f87171">ERROR: Harus HTTPS pak! Upload ke GitHub Pages</span>';
+        return;
+    }
+
+    btnIzinMic.disabled = true;
+    status.innerHTML = '<span style="color:#fbbf24">Menunggu izin... Klik "IZINKAN" di pop-up atas</span>';
+
+    try{
+        // Minta izin mic doang dulu
+        const izinStream = await navigator.mediaDevices.getUserMedia({audio: true});
+        izinStream.getTracks().forEach(t => t.stop()); // langsung matiin
+
+        izinMicOK = true;
+        btnIzinMic.style.background = '#27ae60';
+        btnIzinMic.textContent = '✓ IZIN MIKROFON OK';
+
+        // Scan ulang mic biar labelnya kebaca
+        const perangkat = await navigator.mediaDevices.enumerateDevices();
+        const daftarMic = perangkat.filter(dev => dev.kind === 'audioinput');
+        infoJumlahMic.textContent = `Ditemukan: ${daftarMic.length} mikrofon`;
+        pilihMic.innerHTML = '';
+        daftarMic.forEach((mic, i) => {
+            const opsi = document.createElement('option');
+            opsi.value = mic.deviceId;
+            opsi.textContent = mic.label || `Mikrofon ${i+1}`;
+            pilihMic.appendChild(opsi);
+        });
+        if (daftarMic.length > 0) {
+            deteksiJenisMic(daftarMic[0].label || "");
+        }
+        status.textContent = "✅ Izin OK. Sekarang pilih kamera";
+
+    }catch(err){
+        btnIzinMic.disabled = false;
+        if(err.name === 'NotAllowedError'){
+            status.innerHTML = '<span style="color:#f87171">Ditolak! Setelan HP → Aplikasi → Chrome → Izin → Mikrofon</span>';
+        }else{
+            status.innerHTML = '<span style="color:#f87171">Error: '+err.message+'</span>';
+        }
+    }
+});async </script>
 
 </body>
 </html>
