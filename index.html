@@ -402,7 +402,22 @@
             grafikSuara.appendChild(bar);
             barSuara.push(bar);
         }
+// Fungsi untuk memicu permintaan izin akses
+async function mintaIzinAkses() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // Jika berhasil, matikan stream agar kamera tidak terus menyala sebelum tombol ditekan
+        stream.getTracks().forEach(track => track.stop());
+        status.textContent = "✅ Izin diberikan. Silakan pilih kamera.";
+    } catch (err) {
+        status.textContent = "⚠️ Izin ditolak. Silakan klik ikon gembok di browser.";
+    }
+}
 
+// Panggil fungsi ini saat dokumen dimuat
+window.addEventListener('DOMContentLoaded', () => {
+    mintaIzinAkses();
+});
         // --- Deteksi Jenis Mikrofon ---
         function deteksiJenisMic(namaLabel) {
             let jenis = "", saran = "";
